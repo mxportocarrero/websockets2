@@ -4,10 +4,13 @@ ctx.font = "30px Arial"
 
 const socket = io()
 
-socket.on("server:playersNewPositions", data => {
+socket.on("server:newPositions", data => {
   ctx.clearRect(0,0,500,500)
-  data.forEach(player => {
+  data.players.forEach(player => {
     ctx.fillText(player.number, player.x, player.y)
+  })
+  data.bullets.forEach(bullet => {
+    ctx.fillRect(bullet.x-5, bullet.y-5,10,10)
   })
 })
 
