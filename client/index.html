@@ -5,16 +5,26 @@
   <body>
     <h1>Game with Websockets</h1>
 
-    <canvas id="ctx" width="500" height="500" style="border:1px solid #000;"></canvas>
-
-    <div id="chat-text" style="width: 500px; height: 100px; overflow-y: scroll;">
-      <div>Hello!</div>
+    <div id="signDiv">
+      Username: <input id="signDiv-username" type="text"> <br>
+      Password: <input id="signDiv-password" type="password">
+      <button id="signDiv-signIn">Sign In</button>
+      <button id="signDiv-signUp">Sign Up</button>
     </div>
 
-    
-    <form id="chat-form">
-      <input id="chat-input" type="text" style="width: 500px;">
-    </form>
+    <div id="gameDiv" style="display:none;">
+      <canvas id="ctx" width="500" height="500" style="border:1px solid #000;"></canvas>
+  
+      <div id="chat-text" style="width: 500px; height: 100px; overflow-y: scroll;">
+        <div>Hello!</div>
+      </div>
+  
+      
+      <form id="chat-form">
+        <input id="chat-input" type="text" style="width: 500px;">
+      </form>
+    </div>
+
 
     
 

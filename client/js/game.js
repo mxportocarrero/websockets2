@@ -6,6 +6,12 @@ ctx.font = "30px Arial"
 
 const socket = io()
 
+// sign
+
+
+
+
+// game
 socket.on("server:newPositions", data => {
   ctx.clearRect(0,0,500,500)
   data.players.forEach(player => {
