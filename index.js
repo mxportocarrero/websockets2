@@ -44,6 +44,10 @@ const Entity = () => {
     self.y += self.spdY;
   }
 
+  self.getDistance = (pt) => {
+    return Math.sqrt(Math.pow(self.x-pt.x,2) + Math.pow(self.y-pt.y,2))
+  }
+
   return self
 }
 
@@ -55,14 +59,29 @@ const Player = (id) => {
   self.pressingLeft = false;
   self.pressingUp = false;
   self.pressingDown = false;
+  self.pressingAttack = false;
+  self.mouseAngle = 0;
   self.maxSpeed = 10;
 
   const super_update = self.update
 
   self.update = () => {
     //console.log("player update")
+
     self.updateSpd();
     super_update();
+
+    if(self.pressingAttack){
+      for(let i = -3; i < 3; i++)
+        // self.shootBullet(Math.random()*360)
+        self.shootBullet(i * 10 + self.mouseAngle)
+    }
+  }
+
+  self.shootBullet = (angle) => {
+    const b = Bullet(self.id, angle);
+      b.x = self.x;
+      b.y = self.y;
   }
 
   self.updateSpd = () => {
@@ -83,12 +102,12 @@ const Player = (id) => {
   return self
 } // Eof Player definition
 
-const Bullet = angle => {
+const Bullet = (parent, angle) => {
   const self = Entity()
   self.id = Math.random()
   self.spdX = Math.cos(angle/180*Math.PI) * 10
   self.spdY = Math.sin(angle/180*Math.PI) * 10
-
+  self.parent = parent
   self.timer = 0;
   self.toRemove = false;
   const super_update = self.update;
@@ -96,6 +115,14 @@ const Bullet = angle => {
     if(self.timer++ > 100)
       self.toRemove = true;
     super_update();
+
+    Object.keys(Player.list).forEach(key => {
+      const player = Player.list[key]
+      if(self.getDistance(player) < 32 && self.parent !== player.id){
+        // TODO handle collision
+        self.toRemove = true
+      }
+    })
   }
 
   Bullet.list[self.id] = self;
@@ -106,12 +133,14 @@ const Bullet = angle => {
 Bullet.list = {}
 
 Bullet.update = () => {
-  if(Math.random() < 0.1){
-    Bullet(Math.random()*360)
-  }
-
-
-  return Object.keys(Bullet.list).map(key =>{
+  return Object.keys(Bullet.list).filter(key => {
+    const bullet = Bullet.list[key]
+    if(bullet.toRemove){
+      delete Bullet.list[key]
+      return false
+    }
+    return true
+  }).map(key =>{
     const bullet = Bullet.list[key]
     bullet.update()
     return bullet
@@ -122,7 +151,7 @@ Player.list = {}
 Player.onConnect = socket => {
   const player = Player(socket.id)
   
-  socket.on('keypress', data => {
+  socket.on('keyPress', data => {
     //console.log(data)
     if(data.inputID === 'left')
       player.pressingLeft = data.state
@@ -132,6 +161,10 @@ Player.onConnect = socket => {
       player.pressingUp = data.state
     else if(data.inputID === 'down')
       player.pressingDown = data.state
+    else if(data.inputID === 'attack')
+      player.pressingAttack = data.state
+    else if(data.inputID === 'mouseAngle')
+      player.mouseAngle = data.state
     })
 }
 
@@ -147,6 +180,8 @@ Player.update = () => {
   })
 }
 
+const DEBUG = true;
+
 io.sockets.on('connection', (socket => {
   // socket configuration
   socket.id = parseInt((Math.random()*1000000), 10);
@@ -160,6 +195,21 @@ io.sockets.on('connection', (socket => {
     Player.onDisconnect(socket)
   })
 
+  socket.on('sendingMessageToServer', data => {
+    //console.log(data)
+    const playerName = ("" + socket.id).slice(2,7);
+
+    Object.keys(socketList).forEach(key => {
+      const socket = socketList[key]
+      socket.emit('server:addToChat', `${playerName}: ${data}`);
+    })
+  })
+
+  socket.on('evalServer', data => {
+    if(!DEBUG) return;
+    const res = eval(data)
+    socket.emit('server:evalAnswer', res)
+  })
 
 }));
 
